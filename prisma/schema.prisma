@@ -1,0 +1,164 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Generation {
+  id              Int            @id @default(autoincrement())
+  uuid            String         @unique @default(uuid())
+  compositionId   String
+  quizMultiple    QuizMultiple?
+  quizWhoIAm      QuizWhoIAm?
+  quizAff         QuizAff?
+  story           Story?
+  status          Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model QuizMultiple {
+  id              Int            @id @default(autoincrement())
+  uuid            String         @unique @default(uuid())              // UUID unique
+  quizElements    elementQuizMultiple[]
+  themeQuiz       String
+  hookSentence    String
+  hookSenteceAudioProps String
+  ctaSentence     String
+  ctaSenteceAudioProps String
+  backGroundProps String
+  generationId    Int             @unique
+  generation      Generation      @relation(fields: [generationId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model elementQuizMultiple {
+  id              Int             @id @default(autoincrement())
+  question        String
+  options         String          // Utilisation d'une chaîne pour les options, séparées par des virgules
+  correctAnswerIndex Int
+  imgSrc          String?
+  audioProps      String
+  answerAudioProps String
+  quizMultipleId  Int
+  quizMultiple    QuizMultiple    @relation(fields: [quizMultipleId], references: [id])
+  @@index([quizMultipleId])
+}
+
+
+model QuizAff {
+  id              Int            @id @default(autoincrement())
+  uuid            String         @unique @default(uuid())
+  themeQuiz       String
+  quizElements    elementQuizAff[]
+  hookSentence    String
+  hookSenteceAudioProps String
+  ctaSentence     String
+  ctaSenteceAudioProps String
+  backGroundProps String
+  generationId    Int             @unique
+  generation      Generation      @relation(fields: [generationId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model elementQuizAff {
+  id              Int             @id @default(autoincrement())
+  affirmation     String
+  audioProps      String
+  quizAffId       Int
+  quizAff         QuizAff      @relation(fields: [quizAffId], references: [id])
+  @@index([quizAffId])
+}
+
+
+model QuizWhoIAm {
+  id              Int            @id @default(autoincrement())
+  uuid            String         @unique @default(uuid())
+  quizElements    elementQuizWhoIAm[]
+  characterName   String
+  answer          String
+  hookSentence    String
+  hookSenteceAudioProps String
+  ctaSentence     String
+  backGroundProps String
+  generationId    Int             @unique
+  generation      Generation      @relation(fields: [generationId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model elementQuizWhoIAm {
+  id              Int             @id @default(autoincrement())
+  fact            String
+  audioProps      String
+  quizWhoIAmId    Int
+  quizWhoIAm      QuizWhoIAm        @relation(fields: [quizWhoIAmId], references: [id])
+  @@index([quizWhoIAmId])
+}
+
+model CharacterName {
+  id            Int                  @id @default(autoincrement())
+  characterName String
+  used          Boolean              @default(false)
+}
+
+model Story {
+  id                  Int             @id @default(autoincrement()) // Identifiant unique
+  uuid                String          @unique @default(uuid())      // UUID unique
+  name                String                                       // Nom du conte
+  storyContent        String                                       // Contenue de l'histoire
+  scenes              Scene[]                                      // Relation vers le modèle Scene
+  status              String          @default("Initied")          // Statut du conte (Initied, Proccessing, complete)
+  generationId        Int             @unique
+  generation          Generation      @relation(fields: [generationId], references: [id])
+  cinematicProps      CinematicProps?
+  createdAt           DateTime        @default(now())              // Date de création
+  updatedAt           DateTime        @updatedAt                   // Date de mise à jour
+}
+
+
+model Scene {
+  id                    Int                   @id @default(autoincrement()) // Identifiant unique
+  uuid                  String                @default(uuid())              // UUID unique
+  content               String                                              // Contenu en text de la scène
+  segments              Segment[]                                            // Relation vers le modèle Segment                              // Propriété cinématique
+  storyId               Int                                                // Clé étrangère vers Tale
+  story                 Story                 @relation(fields: [storyId], references: [id]) // Relation vers le modèle Tale
+  createdAt             DateTime              @default(now())              // Date de création
+  updatedAt             DateTime              @updatedAt                 // Date de mise à jour
+  @@index([uuid])
+  @@index([storyId])
+}
+
+model Segment {
+  id                Int       @id @default(autoincrement()) // Identifiant unique
+  uuid              String    @default(uuid())              // UUID unique
+  descriptionPrompt String                                 // Prompt décrivant le segment pour midjourney
+  content           String                                 // Contenu du segment
+  imageUrl          String                                // URL de l'image générée
+  audioProps        String                                // URL de la voix générée
+  sceneId           Int                                    // Clé étrangère vers Scene
+  scene             Scene     @relation(fields: [sceneId], references: [id]) // Relation vers le modèle Scene
+  createdAt         DateTime  @default(now())              // Date de création
+  updatedAt         DateTime  @updatedAt                   // Date de mise à jour
+  @@index([uuid])
+  @@index([sceneId])
+}
+
+model CinematicProps {
+  id              Int         @id @default(autoincrement()) // Identifiant unique
+  context         String                                    // Contexte de la scène
+  style           String                                    // Style cinématique
+  colorPalette    String                                    // Palette de couleurs
+  lighting        String                                    // Éclairage
+  mood            String                                    // Ambiance
+  characterDesign String                                    // Design des personnages
+  environment     String                                    // Environnement
+  storyId          Int         @unique
+  story           Story        @relation(fields: [storyId], references: [id])
+}
